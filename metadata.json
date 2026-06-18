@@ -1,0 +1,6 @@
+{
+  "name": "Private Task Assigner & Chat",
+  "description": "Secure private task delegation, 1-on-1 task chat, real-time progress syncing, deadline alarms, and NotebookLM AI project insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
