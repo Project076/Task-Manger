@@ -187,14 +187,16 @@ const requireAuth = (req: express.Request, res: express.Response, next: express.
 
 // --- API ROUTES ---
 
+const apiRouter = express.Router();
+
 // 1. Get all enrolled users
-app.get('/api/users', (req, res) => {
+apiRouter.get('/users', (req, res) => {
   const db = readDb();
   res.json(db.users);
 });
 
 // 2. Get tasks (Strict boundary: only returns tasks where user is assignee or assigner)
-app.get('/api/tasks', requireAuth, (req, res) => {
+apiRouter.get('/tasks', requireAuth, (req, res) => {
   const user = (req as any).user as User;
   const db = readDb();
   
@@ -206,7 +208,7 @@ app.get('/api/tasks', requireAuth, (req, res) => {
 });
 
 // 3. Assign/Create a new task
-app.post('/api/tasks', requireAuth, (req, res) => {
+apiRouter.post('/tasks', requireAuth, (req, res) => {
   const user = (req as any).user as User;
   const { title, description, assigneeId, startDate, deadline } = req.body;
   
@@ -255,7 +257,7 @@ app.post('/api/tasks', requireAuth, (req, res) => {
 });
 
 // 4. Update task (Progress, Snooze, Status)
-app.patch('/api/tasks/:id', requireAuth, (req, res) => {
+apiRouter.patch('/tasks/:id', requireAuth, (req, res) => {
   const user = (req as any).user as User;
   const taskId = req.params.id;
   const { progress, snoozedUntil, status, title, description, startDate, deadline } = req.body;
@@ -339,7 +341,7 @@ app.patch('/api/tasks/:id', requireAuth, (req, res) => {
 });
 
 // 5. Upload document/attachment to task
-app.post('/api/tasks/:id/attachments', requireAuth, (req, res) => {
+apiRouter.post('/tasks/:id/attachments', requireAuth, (req, res) => {
   const user = (req as any).user as User;
   const taskId = req.params.id;
   const { name, type, size, content } = req.body;
@@ -388,7 +390,7 @@ app.post('/api/tasks/:id/attachments', requireAuth, (req, res) => {
 });
 
 // 6. Get Chat messages for a specific task
-app.get('/api/tasks/:id/messages', requireAuth, (req, res) => {
+apiRouter.get('/tasks/:id/messages', requireAuth, (req, res) => {
   const user = (req as any).user as User;
   const taskId = req.params.id;
   
@@ -411,7 +413,7 @@ app.get('/api/tasks/:id/messages', requireAuth, (req, res) => {
 });
 
 // 7. Post a chat message
-app.post('/api/tasks/:id/messages', requireAuth, (req, res) => {
+apiRouter.post('/tasks/:id/messages', requireAuth, (req, res) => {
   const user = (req as any).user as User;
   const taskId = req.params.id;
   const { text } = req.body;
@@ -447,7 +449,7 @@ app.post('/api/tasks/:id/messages', requireAuth, (req, res) => {
 });
 
 // 8. NotebookLM Smart Assistant Endpoint - Aggregates task context + chat history + files, and chats with Gemini
-app.post('/api/notebooklm/insights', requireAuth, async (req, res) => {
+apiRouter.post('/notebooklm/insights', requireAuth, async (req, res) => {
   const { taskId, query } = req.body;
   
   if (!taskId) {
@@ -557,6 +559,10 @@ The secure project "**${task.title}**" is assigned to **Sarah Dev** and is curre
     res.status(500).json({ error: `AI Handshake Failed: ${err.message || err}` });
   }
 });
+
+// Mount the apiRouter under both prefixes to handle all environment and proxy scenarios flawlessly
+app.use('/api', apiRouter);
+app.use('/', apiRouter);
 
 
 // --- VITE MIDDLEWARE AND WEB STATIC HANDLERS ---
